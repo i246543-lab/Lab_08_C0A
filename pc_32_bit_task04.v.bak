@@ -1,0 +1,62 @@
+module program_counter( clk, reset, pc_out);
+input clk, reset;
+output reg [31:0] pc_out;
+always @ (posedge clk or posedge reset)
+begin 
+    if(reset)
+      pc_out <= 32'h00000000;
+    else
+     pc_out <= pc_out + 32'd4;
+end
+endmodule
+module instruction_memory(addr, instruction);
+input [3:0] addr;
+output reg [31:0] instruction;
+reg [31:0] memory [0:15];
+initial 
+begin
+memory[0]  = 32'h00500093; // addi x1, x0, 5   (At byte addr 0x00)
+memory[1]  = 32'h00a00113; // addi x2, x0, 10  (At byte addr 0x04)
+memory[2]  = 32'h002081b3; // add  x3, x1, x2  (At byte addr 0x08)
+memory[3]  = 32'h40208233; // sub  x4, x1, x2  (At byte addr 0x0C)
+memory[4]  = 32'h00000000; // NOP  (At byte addr 0x10)
+memory[5]  = 32'h00000000; // NOP
+memory[6]  = 32'h00000000; // NOP
+memory[7]  = 32'h00000000; // NOP
+memory[8]  = 32'h00000000; // NOP
+memory[9]  = 32'h00000000; // NOP
+memory[10] = 32'h00000000; // NOP
+memory[11] = 32'h00000000; // NOP
+memory[12] = 32'h00000000; // NOP
+memory[13] = 32'h00000000; // NOP
+memory[14] = 32'h00000000; // NOP
+memory[15] = 32'h00000000; // NOP
+end
+always @ (*) 
+begin
+ instruction= memory[addr[5:2]];
+end
+endmodule
+module top_rv32_fetch(clk, reset, pc_out, instruction);
+input clk, reset;
+output [31:0] pc_out;
+output [31:0] instruction;
+program_counter pc(.clk(clk), .reset(reset), .pc_out(pc_out));
+instruction_memory im(.addr(pc_out), .instruction(instruction));
+endmodule
+module tb_program_counter();
+reg clk, reset;
+wire [31:0] pc_out;
+wire [31:0] instruction;
+top_rv32_fetch uut(.clk(clk),.reset(reset),.pc_out(pc_out),.instruction(instruction));
+always begin
+#5 clk= ~clk;
+end
+initial
+begin
+clk=0;
+reset=0;
+reset=1;
+#10 reset=0;
+end
+endmodule
